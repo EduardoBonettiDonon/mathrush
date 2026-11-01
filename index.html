@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#11112b">
+  <title>Math Rush</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d20;
+      --panel: #191934;
+      --panel2: #222247;
+      --text: #f7f7ff;
+      --muted: #b8b8d6;
+      --purple: #8b5cf6;
+      --pink: #ec4899;
+      --green: #34d399;
+      --red: #fb7185;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px;
+      display: grid; place-items: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(ellipse at top, #28205a 0%, var(--bg) 58%);
+    }
+    button, input { font: inherit; }
+    button {
+      border: 0; border-radius: 14px; padding: 14px 20px;
+      color: white; font-weight: 750; cursor: pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    button:focus-visible, input:focus-visible { outline: 3px solid #c4b5fd; outline-offset: 3px; }
+    .primary { background: linear-gradient(110deg, var(--purple), var(--pink)); }
+    .secondary { background: #34345c; }
+    .app { width: min(100%, 560px); }
+    .brand { text-align: center; margin-bottom: 20px; }
+    .brand-mark { font-size: 2.5rem; line-height: 1.1; }
+    h1 { margin: 8px 0 4px; font-size: clamp(2rem, 7vw, 3rem); letter-spacing: -1.5px; }
+    .subtitle { color: var(--muted); margin: 0; }
+    .panel {
+      background: rgba(25, 25, 52, .94); border: 1px solid #37375f;
+      border-radius: 24px; padding: clamp(22px, 5vw, 34px);
+      box-shadow: 0 24px 70px #0005;
+    }
+    .screen[hidden] { display: none !important; }
+    .center { text-align: center; }
+    .intro-icon { font-size: 3rem; margin: 8px 0; }
+    .panel h2 { margin: 0 0 10px; font-size: 1.5rem; }
+    .description { color: var(--muted); line-height: 1.6; }
+    .wide { width: 100%; margin-top: 14px; }
+    .stats { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 26px; }
+    .stat { flex: 1; padding: 13px; text-align: center; background: var(--panel2); border-radius: 14px; }
+    .stat-label { display: block; color: var(--muted); font-size: .8rem; margin-bottom: 3px; }
+    .stat-value { font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .question-label { text-align: center; color: var(--muted); margin-bottom: 8px; }
+    .question { text-align: center; font-size: clamp(2.8rem, 12vw, 4.2rem); font-weight: 850; letter-spacing: -2px; margin: 0 0 22px; }
+    .answer-form { display: flex; flex-direction: column; gap: 12px; }
+    .answer-input {
+      width: 100%; padding: 16px; border-radius: 14px; border: 2px solid #41416b;
+      background: #101027; color: var(--text); text-align: center; font-size: 1.5rem;
+    }
+    .feedback { min-height: 25px; text-align: center; margin: 12px 0 0; font-weight: 650; }
+    .feedback.good { color: var(--green); }
+    .feedback.bad { color: var(--red); }
+    .result-score { font-size: 4rem; font-weight: 900; line-height: 1.2; margin: 12px 0; }
+    .result-actions { display: grid; gap: 10px; margin-top: 20px; }
+    .help { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 18px; }
+    @media (max-width: 420px) {
+      body { padding: 14px; }
+      .stats { gap: 7px; }
+      .stat { padding: 10px 6px; }
+      .stat-value { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="brand">
+      <div class="brand-mark" aria-hidden="true">⚡</div>
+      <h1>Math Rush</h1>
+      <p class="subtitle">Pense rápido. Some pontos. Supere seu recorde.</p>
+    </header>
+
+    <section id="menuScreen" class="panel screen">
+      <div class="center">
+        <div class="intro-icon" aria-hidden="true">🧠</div>
+        <h2>Pronto para o desafio?</h2>
+        <p class="description">Resolva as contas antes que o tempo acabe. Cada resposta certa vale 1 ponto e renova o cronômetro. Uma resposta errada encerra a rodada!</p>
+      </div>
+      <button id="playButton" class="primary wide" type="button">Jogar</button>
+      <p class="help">Operações: adição, subtração, multiplicação e divisão.</p>
+    </section>
+
+    <section id="gameScreen" class="panel screen" hidden>
+      <div class="stats">
+        <div class="stat"><span class="stat-label">PONTOS</span><span id="scoreValue" class="stat-value">0</span></div>
+        <div class="stat"><span class="stat-label">TEMPO</span><span id="timeValue" class="stat-value">30</span></div>
+        <div class="stat"><span class="stat-label">RECORDE</span><span id="bestValue" class="stat-value">0</span></div>
+      </div>
+      <p class="question-label">Quanto é?</p>
+      <p id="questionText" class="question" aria-live="polite">7 + 5</p>
+      <form id="answerForm" class="answer-form">
+        <label for="answerInput" class="question-label">Digite sua resposta</label>
+        <input id="answerInput" class="answer-input" type="number" inputmode="numeric" autocomplete="off" placeholder="Sua resposta" required>
+        <button class="primary" type="submit">Confirmar resposta</button>
+      </form>
+      <p id="feedbackText" class="feedback" aria-live="polite"></p>
+    </section>
+
+    <section id="endScreen" class="panel screen center" hidden>
+      <div class="intro-icon" aria-hidden="true">🏁</div>
+      <h2 id="resultTitle">Fim de jogo!</h2>
+      <p class="description">Sua pontuação:</p>
+      <div id="finalScore" class="result-score">0</div>
+      <p id="resultMessage" class="description">Tente novamente para bater seu recorde.</p>
+      <div class="result-actions">
+        <button id="restartButton" class="primary" type="button">Jogar novamente</button>
+        <button id="homeButton" class="secondary" type="button">Voltar ao início</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // O JavaScript fica no próprio arquivo e só começa após o HTML estar pronto.
+    (() => {
+      "use strict";
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const menuScreen = document.getElementById("menuScreen");
+        const gameScreen = document.getElementById("gameScreen");
+        const endScreen = document.getElementById("endScreen");
+        const playButton = document.getElementById("playButton");
+        const restartButton = document.getElementById("restartButton");
+        const homeButton = document.getElementById("homeButton");
+        const answerForm = document.getElementById("answerForm");
+        const answerInput = document.getElementById("answerInput");
+        const questionText = document.getElementById("questionText");
+        const scoreValue = document.getElementById("scoreValue");
+        const timeValue = document.getElementById("timeValue");
+        const bestValue = document.getElementById("bestValue");
+        const feedbackText = document.getElementById("feedbackText");
+        const finalScore = document.getElementById("finalScore");
+        const resultTitle = document.getElementById("resultTitle");
+        const resultMessage = document.getElementById("resultMessage");
+
+        let score = 0;
+        let timeLeft = 30;
+        let currentAnswer = 0;
+        let timerId = null;
+        let playing = false;
+        let bestScore = loadBestScore();
+
+        function loadBestScore() {
+          try {
+            return Number.parseInt(localStorage.getItem("mathRushBestScore") || "0", 10) || 0;
+          } catch (error) {
+            return 0;
+          }
+        }
+
+        function saveBestScore(value) {
+          try {
+            localStorage.setItem("mathRushBestScore", String(value));
+          } catch (error) {
+            // O jogo continua funcionando mesmo se o navegador bloquear o armazenamento.
+          }
+        }
+
+        function showScreen(screen) {
+          menuScreen.hidden = screen !== "menu";
+          gameScreen.hidden = screen !== "game";
+          endScreen.hidden = screen !== "end";
+        }
+
+        function updateStats() {
+          scoreValue.textContent = String(score);
+          timeValue.textContent = String(timeLeft);
+          bestValue.textContent = String(bestScore);
+        }
+
+        function makeQuestion() {
+          const operations = ["+", "−", "×", "÷"];
+          const operation = operations[Math.floor(Math.random() * operations.length)];
+          let a;
+          let b;
+
+          if (operation === "+") {
+            a = randomInt(1, 50);
+            b = randomInt(1, 50);
+            currentAnswer = a + b;
+          } else if (operation === "−") {
+            a = randomInt(1, 50);
+            b = randomInt(1, a);
+            currentAnswer = a - b;
+          } else if (operation === "×") {
+            a = randomInt(2, 12);
+            b = randomInt(2, 12);
+            currentAnswer = a * b;
+          } else {
+            b = randomInt(2, 12);
+            currentAnswer = randomInt(2, 12);
+            a = b * currentAnswer;
+          }
+
+          questionText.textContent = `${a} ${operation} ${b}`;
+        }
+
+        function randomInt(min, max) {
+          return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function startGame() {
+          stopTimer();
+          score = 0;
+          timeLeft = 30;
+          playing = true;
+          feedbackText.textContent = "";
+          feedbackText.className = "feedback";
+          updateStats();
+          makeQuestion();
+          showScreen("game");
+          answerInput.value = "";
+          answerInput.disabled = false;
+          const submitButton = answerForm.querySelector('button[type="submit"]');
+          if (submitButton) submitButton.disabled = false;
+          answerInput.focus();
+          timerId = window.setInterval(() => {
+            if (!playing) return;
+            timeLeft -= 1;
+            timeValue.textContent = String(timeLeft);
+            if (timeLeft <= 0) endGame("time");
+          }, 1000);
+        }
+
+        function stopTimer() {
+          if (timerId !== null) {
+            window.clearInterval(timerId);
+            timerId = null;
+          }
+        }
+
+        function endGame(reason) {
+          if (!playing) return;
+          playing = false;
+          stopTimer();
+
+          if (score > bestScore) {
+            bestScore = score;
+            saveBestScore(bestScore);
+            resultTitle.textContent = "Novo recorde! 🎉";
+            resultMessage.textContent = "Mandou bem! Você bateu seu recorde pessoal.";
+          } else {
+            resultTitle.textContent = reason === "wrong" ? "Resposta errada!" : "Tempo esgotado!";
+            resultMessage.textContent = "Tente novamente para conseguir uma pontuação maior.";
+          }
+
+          finalScore.textContent = String(score);
+          updateStats();
+          answerInput.disabled = true;
+          const submitButton = answerForm.querySelector('button[type="submit"]');
+          if (submitButton) submitButton.disabled = true;
+          showScreen("end");
+        }
+
+        playButton.addEventListener("click", startGame);
+        restartButton.addEventListener("click", startGame);
+        homeButton.addEventListener("click", () => {
+          stopTimer();
+          playing = false;
+          showScreen("menu");
+        });
+
+        answerForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          if (!playing) return;
+
+          const rawAnswer = answerInput.value.trim();
+          if (rawAnswer === "") {
+            answerInput.focus();
+            return;
+          }
+
+          const answer = Number(rawAnswer);
+          if (Number.isFinite(answer) && answer === currentAnswer) {
+            score += 1;
+            timeLeft = 30;
+            updateStats();
+            feedbackText.textContent = "Correto! +1 ponto";
+            feedbackText.className = "feedback good";
+            makeQuestion();
+            answerInput.value = "";
+            answerInput.focus();
+          } else {
+            feedbackText.textContent = "Ops! Essa não era a resposta.";
+            feedbackText.className = "feedback bad";
+            endGame("wrong");
+          }
+        });
+
+        updateStats();
+      });
+    })();
+  </script>
+</body>
+</html>
